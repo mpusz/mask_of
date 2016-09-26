@@ -25,7 +25,8 @@
 
 namespace std {
 
-template< class T >
+// C++17 stuff
+template<class T>
 constexpr bool is_enum_v = is_enum<T>::value;
 
 }
@@ -40,42 +41,49 @@ constexpr bool is_bitmask_v = is_bitmask<T>::value;
 
 template<typename Enum>
 class mask_of {
-private:
-  static_assert(std::is_enum_v<Enum>, "T should be an enumeration type");
-  using u_type = std::underlying_type_t<Enum>;
-
 public:
-  using value_type = decltype(std::declval<u_type>() | std::declval<u_type>());
+  static_assert(std::is_enum_v<Enum>, "T should be an enumeration type");
+  static_assert(is_bitmask_v<Enum>, "T should be a bitmask type");
 
-  constexpr explicit mask_of(Enum v) noexcept : value_{static_cast<u_type>(v)} {}
-  constexpr explicit mask_of(value_type v) noexcept : value_{v} {}
-  constexpr operator value_type () const noexcept { return value_; }
+  using value_type = std::underlying_type_t<Enum>;
 
-  friend constexpr mask_of operator&(mask_of lhs, Enum rhs)
-  {
-    return mask_of{static_cast<value_type>(lhs) & static_cast<u_type>(rhs)};
-  }
-  friend constexpr mask_of operator&(Enum lhs, mask_of rhs)
-  {
-    return mask_of{static_cast<u_type>(lhs) & static_cast<value_type>(rhs)};
-  }
+  mask_of() = default;
+  constexpr explicit mask_of(Enum e) noexcept : value_{static_cast<value_type>(e)} {}
+  constexpr /* explicit */ operator value_type () const noexcept { return value_; }
+
+  constexpr bool operator ==(mask_of<Enum> other) const noexcept { return value_ == other.value_; }
+
+  constexpr mask_of& operator &=(mask_of other) noexcept         { value_ &= other.value_; return *this; }
+  constexpr mask_of& operator |=(mask_of other) noexcept         { value_ |= other.value_; return *this; }
+  constexpr mask_of& operator ^=(mask_of other) noexcept         { value_ ^= other.value_; return *this; }
+  constexpr mask_of operator ~() const noexcept                  { return mask_of{static_cast<value_type>(~value_)}; }
+  constexpr mask_of& operator &=(Enum v) noexcept                { return *this &= mask_of<Enum>{v}; }
+  constexpr mask_of& operator |=(Enum v) noexcept                { return *this |= mask_of<Enum>{v}; }
+  constexpr mask_of& operator ^=(Enum v) noexcept                { return *this ^= mask_of<Enum>{v}; }
 
 private:
   value_type value_;
+  constexpr explicit mask_of(value_type v) noexcept : value_{v} {}
 };
 
-template<typename Enum>
-std::enable_if_t<is_bitmask_v<Enum>, mask_of<Enum>>
-constexpr operator|(Enum lhs, Enum rhs)
-{
-  using u_type = std::underlying_type_t<Enum>;
-  return mask_of<Enum>{static_cast<u_type>(lhs) | static_cast<u_type>(rhs)};
-}
+template<typename Enum> constexpr bool operator != (mask_of<Enum> lhs, mask_of<Enum> rhs) noexcept        { return !(lhs == rhs); }
+template<typename Enum> constexpr bool operator == (mask_of<Enum> lhs, Enum rhs) noexcept                 { return lhs == mask_of<Enum>{rhs}; }
+template<typename Enum> constexpr bool operator != (mask_of<Enum> lhs, Enum rhs) noexcept                 { return lhs != mask_of<Enum>{rhs}; }
+template<typename Enum> constexpr bool operator == (Enum lhs, mask_of<Enum> rhs) noexcept                 { return mask_of<Enum>{lhs} == rhs; }
+template<typename Enum> constexpr bool operator != (Enum lhs, mask_of<Enum> rhs) noexcept                 { return mask_of<Enum>{lhs} != rhs; }
 
-template<typename Enum>
-std::enable_if_t<is_bitmask_v<Enum>, mask_of<Enum>>
-constexpr operator&(Enum lhs, Enum rhs)
-{
-  using u_type = std::underlying_type_t<Enum>;
-  return mask_of<Enum>{static_cast<u_type>(lhs) & static_cast<u_type>(rhs)};
-}
+template<typename Enum> constexpr mask_of<Enum> operator &(mask_of<Enum> lhs, mask_of<Enum> rhs) noexcept { return lhs &= rhs; }
+template<typename Enum> constexpr mask_of<Enum> operator |(mask_of<Enum> lhs, mask_of<Enum> rhs) noexcept { return lhs |= rhs; }
+template<typename Enum> constexpr mask_of<Enum> operator ^(mask_of<Enum> lhs, mask_of<Enum> rhs) noexcept { return lhs ^= rhs; }
+
+template<typename Enum> constexpr mask_of<Enum> operator &(mask_of<Enum> lhs, Enum rhs) noexcept          { return lhs & mask_of<Enum>{rhs}; }
+template<typename Enum> constexpr mask_of<Enum> operator |(mask_of<Enum> lhs, Enum rhs) noexcept          { return lhs | mask_of<Enum>{rhs}; }
+template<typename Enum> constexpr mask_of<Enum> operator ^(mask_of<Enum> lhs, Enum rhs) noexcept          { return lhs ^ mask_of<Enum>{rhs}; }
+template<typename Enum> constexpr mask_of<Enum> operator &(Enum lhs, mask_of<Enum> rhs) noexcept          { return mask_of<Enum>{lhs} & rhs; }
+template<typename Enum> constexpr mask_of<Enum> operator |(Enum lhs, mask_of<Enum> rhs) noexcept          { return mask_of<Enum>{lhs} | rhs; }
+template<typename Enum> constexpr mask_of<Enum> operator ^(Enum lhs, mask_of<Enum> rhs) noexcept          { return mask_of<Enum>{lhs} ^ rhs; }
+
+template<typename Enum> constexpr std::enable_if_t<is_bitmask_v<Enum>, mask_of<Enum>> operator &(Enum lhs, Enum rhs) { return mask_of<Enum>{lhs} & mask_of<Enum>{rhs}; }
+template<typename Enum> constexpr std::enable_if_t<is_bitmask_v<Enum>, mask_of<Enum>> operator |(Enum lhs, Enum rhs) { return mask_of<Enum>{lhs} | mask_of<Enum>{rhs}; }
+template<typename Enum> constexpr std::enable_if_t<is_bitmask_v<Enum>, mask_of<Enum>> operator ^(Enum lhs, Enum rhs) { return mask_of<Enum>{lhs} ^ mask_of<Enum>{rhs}; }
+template<typename Enum> constexpr std::enable_if_t<is_bitmask_v<Enum>, mask_of<Enum>> operator ~(Enum v)             { return ~mask_of<Enum>{v}; }

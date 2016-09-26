@@ -51,16 +51,133 @@ constexpr bool is_in_state(MarketState current, mask_of<MarketState> expected_ma
   return (expected_mask & current) != 0;
 }
 
+using mask = mask_of<MarketState>;
+
 TEST(maskOf, CompileTime)
 {
-  constexpr mask_of<MarketState> s1{MarketState::A};
-  constexpr mask_of<MarketState> s2{MarketState::A | MarketState::B};
-  static_assert(is_in_state(MarketState::A, s1), "Wrong state");
-  static_assert(is_in_state(MarketState::A, s2), "Wrong state");
+  static_assert(0 == mask{}, "");
+
+  static_assert(MarketState::A == mask{MarketState::A}, "");
+
+  static_assert(mask{MarketState::A} == mask{MarketState::A}, "");
+  static_assert(mask{MarketState::B} == mask{MarketState::B}, "");
+  static_assert(mask{MarketState::C} == mask{MarketState::C}, "");
+  static_assert(MarketState::A == mask{MarketState::A}, "");
+  static_assert(MarketState::B == mask{MarketState::B}, "");
+  static_assert(MarketState::C == mask{MarketState::C}, "");
+  static_assert(mask{MarketState::A} == MarketState::A, "");
+  static_assert(mask{MarketState::B} == MarketState::B, "");
+  static_assert(mask{MarketState::C} == MarketState::C, "");
+
+  static_assert(mask{MarketState::A} != mask{}, "");
+  static_assert(mask{MarketState::B} != mask{MarketState::A}, "");
+  static_assert(MarketState::A != mask{}, "");
+  static_assert(MarketState::B != mask{MarketState::A}, "");
+  static_assert(mask{} != MarketState::A, "");
+  static_assert(mask{MarketState::A} != MarketState::B, "");
+
+  static_assert(MarketState::A == (mask{MarketState::A} & mask{MarketState::A}), "");
+  static_assert(MarketState::A != (mask{MarketState::A} & mask{MarketState::B}), "");
+  static_assert(MarketState::A == (mask{MarketState::A} & MarketState::A), "");
+  static_assert(MarketState::A != (mask{MarketState::A} & MarketState::B), "");
+  static_assert(MarketState::A == (MarketState::A & mask{MarketState::A}), "");
+  static_assert(MarketState::A != (MarketState::A & mask{MarketState::B}), "");
+  static_assert(MarketState::A == (MarketState::A & MarketState::A), "");
+  static_assert(MarketState::A != (MarketState::A & MarketState::B), "");
+
+  static_assert(MarketState::A == (mask{MarketState::A} | mask{MarketState::A}), "");
+  static_assert(MarketState::A != (mask{MarketState::A} | mask{MarketState::B}), "");
+  static_assert(MarketState::A == (mask{MarketState::A} | MarketState::A), "");
+  static_assert(MarketState::A != (mask{MarketState::A} | MarketState::B), "");
+  static_assert(MarketState::A == (MarketState::A | mask{MarketState::A}), "");
+  static_assert(MarketState::A != (MarketState::A | mask{MarketState::B}), "");
+  static_assert(MarketState::A == (MarketState::A | MarketState::A), "");
+  static_assert(MarketState::A != (MarketState::A | MarketState::B), "");
+
+  static_assert(mask{}                                  == (mask{MarketState::A} ^ mask{MarketState::A}), "");
+  static_assert((MarketState::A | mask{MarketState::B}) == (mask{MarketState::A} ^ mask{MarketState::B}), "");
+  static_assert(mask{}                                  == (mask{MarketState::A} ^ MarketState::A), "");
+  static_assert((MarketState::A | mask{MarketState::B}) == (mask{MarketState::A} ^ MarketState::B), "");
+  static_assert(mask{}                                  == (MarketState::A ^ mask{MarketState::A}), "");
+  static_assert((MarketState::A | mask{MarketState::B}) == (MarketState::A ^ mask{MarketState::B}), "");
+  static_assert(mask{}                                  == (MarketState::A ^ MarketState::A), "");
+  static_assert((MarketState::A | mask{MarketState::B}) == (MarketState::A ^ MarketState::B), "");
+
+  static_assert(mask{} != ~mask{}, "");
+  static_assert(~MarketState::A == ~mask{MarketState::A}, "");
 }
 
-TEST(maskOf, MarketState)
+TEST(maskOf, DefaultConstructor)
 {
-  MarketState state = MarketState::B;
-  EXPECT_TRUE(is_in_state(state, MarketState::A | MarketState::B));
+  EXPECT_EQ(0, mask{});
+}
+
+TEST(maskOf, UserConstructor)
+{
+  EXPECT_EQ(MarketState::A, mask{MarketState::A});
+}
+
+TEST(maskOf, eqOp)
+{
+  EXPECT_EQ(mask{MarketState::A}, mask{MarketState::A});
+  EXPECT_EQ(mask{MarketState::B}, mask{MarketState::B});
+  EXPECT_EQ(mask{MarketState::C}, mask{MarketState::C});
+  EXPECT_EQ(MarketState::A, mask{MarketState::A});
+  EXPECT_EQ(MarketState::B, mask{MarketState::B});
+  EXPECT_EQ(MarketState::C, mask{MarketState::C});
+  EXPECT_EQ(mask{MarketState::A}, MarketState::A);
+  EXPECT_EQ(mask{MarketState::B}, MarketState::B);
+  EXPECT_EQ(mask{MarketState::C}, MarketState::C);
+}
+
+TEST(maskOf, neOp)
+{
+  EXPECT_NE(mask{MarketState::A}, mask{});
+  EXPECT_NE(mask{MarketState::B}, mask{MarketState::A});
+  EXPECT_NE(MarketState::A, mask{});
+  EXPECT_NE(MarketState::B, mask{MarketState::A});
+  EXPECT_NE(mask{}, MarketState::A);
+  EXPECT_NE(mask{MarketState::A}, MarketState::B);
+}
+
+TEST(maskOf, and)
+{
+  EXPECT_EQ(MarketState::A, mask{MarketState::A} & mask{MarketState::A});
+  EXPECT_NE(MarketState::A, mask{MarketState::A} & mask{MarketState::B});
+  EXPECT_EQ(MarketState::A, mask{MarketState::A} & MarketState::A);
+  EXPECT_NE(MarketState::A, mask{MarketState::A} & MarketState::B);
+  EXPECT_EQ(MarketState::A, MarketState::A & mask{MarketState::A});
+  EXPECT_NE(MarketState::A, MarketState::A & mask{MarketState::B});
+  EXPECT_EQ(MarketState::A, MarketState::A & MarketState::A);
+  EXPECT_NE(MarketState::A, MarketState::A & MarketState::B);
+}
+
+TEST(maskOf, or)
+{
+  EXPECT_EQ(MarketState::A, mask{MarketState::A} | mask{MarketState::A});
+  EXPECT_NE(MarketState::A, mask{MarketState::A} | mask{MarketState::B});
+  EXPECT_EQ(MarketState::A, mask{MarketState::A} | MarketState::A);
+  EXPECT_NE(MarketState::A, mask{MarketState::A} | MarketState::B);
+  EXPECT_EQ(MarketState::A, MarketState::A | mask{MarketState::A});
+  EXPECT_NE(MarketState::A, MarketState::A | mask{MarketState::B});
+  EXPECT_EQ(MarketState::A, MarketState::A | MarketState::A);
+  EXPECT_NE(MarketState::A, MarketState::A | MarketState::B);
+}
+
+TEST(maskOf, xor)
+{
+  EXPECT_EQ(mask{},                                mask{MarketState::A} ^ mask{MarketState::A});
+  EXPECT_EQ(MarketState::A | mask{MarketState::B}, mask{MarketState::A} ^ mask{MarketState::B});
+  EXPECT_EQ(mask{},                                mask{MarketState::A} ^ MarketState::A);
+  EXPECT_EQ(MarketState::A | mask{MarketState::B}, mask{MarketState::A} ^ MarketState::B);
+  EXPECT_EQ(mask{},                                MarketState::A ^ mask{MarketState::A});
+  EXPECT_EQ(MarketState::A | mask{MarketState::B}, MarketState::A ^ mask{MarketState::B});
+  EXPECT_EQ(mask{},                                MarketState::A ^ MarketState::A);
+  EXPECT_EQ(MarketState::A | mask{MarketState::B}, MarketState::A ^ MarketState::B);
+}
+
+TEST(maskOf, not)
+{
+  EXPECT_NE(mask{}, ~mask{});
+  EXPECT_EQ(~MarketState::A, ~mask{MarketState::A});
 }

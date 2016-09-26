@@ -34,17 +34,12 @@ auto get_state() { return MarketState::B; }
 
 void foo()
 {
-  MarketState state = get_state();
+  const MarketState state = get_state();
   const bool valid = is_in_state(state, MarketState::A | MarketState::B);
   std::cout << to_string(state) << ", valid: " << (valid ? "true" : "false") << "\n";
 }
 
 int main()
 {
-  constexpr mask_of<MarketState> s1{MarketState::A};
-  constexpr mask_of<MarketState> s2{MarketState::A | MarketState::B};
-  static_assert(is_in_state(MarketState::A, s1), "Wrong state");
-  static_assert(is_in_state(MarketState::A, s2), "Wrong state");
-
   foo();
 }
