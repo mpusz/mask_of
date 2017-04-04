@@ -1,3 +1,7 @@
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?maxAge=3600)](https://raw.githubusercontent.com/mpusz/mask_of/master/LICENSE)
+[![Travis CI](https://img.shields.io/travis/mpusz/mask_of/master.svg)](https://travis-ci.org/mpusz/mask_of)
+[![Codecov](https://img.shields.io/codecov/c/github/mpusz/mask_of/master.svg)](https://codecov.io/github/mpusz/mask_of?branch=master)
+
 # `mask_of<Enum>`
 
 `mask_of<Enum>` is a class template to express bitmasks created from scoped enumeration type values.

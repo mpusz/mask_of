@@ -24,14 +24,6 @@
 
 #include <type_traits>
 
-namespace std {
-
-// C++17 stuff
-template<class T>
-constexpr bool is_enum_v = is_enum<T>::value;
-
-}
-
 template<typename T>
 struct is_bitmask : std::false_type {};
 
@@ -43,7 +35,7 @@ constexpr bool is_bitmask_v = is_bitmask<T>::value;
 template<typename Enum>
 class mask_of {
 public:
-  static_assert(std::is_enum_v<Enum>, "T should be an enumeration type");
+  static_assert(std::is_enum<Enum>::value, "T should be an enumeration type");
   static_assert(is_bitmask_v<Enum>, "T should be a bitmask type");
 
   using value_type = std::underlying_type_t<Enum>;

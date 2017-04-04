@@ -34,6 +34,9 @@ enum class MarketState : std::uint8_t {
 };
 template<> struct is_bitmask<MarketState> : std::true_type {};
 
+// explicit instantiation needed to make code coverage metrics work correctly
+template class mask_of<MarketState>;
+
 std::string to_string(MarketState s)
 {
   switch(s) {
