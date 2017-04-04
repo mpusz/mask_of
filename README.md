@@ -1,6 +1,6 @@
 # `mask_of<Enum>`
 
-`mask_of<Enum>` is a template type to express bitmasks created from scoped enumeration type values.
+`mask_of<Enum>` is a class template to express bitmasks created from scoped enumeration type values.
 
 I use similar type in production for some time already. Making that code Open Source was inspired by the
 article
